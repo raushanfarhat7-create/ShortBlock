@@ -1,10 +1,10 @@
-
 name: Build ShortBlock APK
 
 on:
   workflow_dispatch:
   push:
     paths:
+      - 'ShortBlock-Project-Download.zip'
       - '.github/workflows/build.yml'
 
 jobs:
@@ -16,7 +16,9 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Extract project
-        run: unzip -o ShortBlock-Project-Download.zip -d .
+        run: |
+          mkdir project
+          unzip -o ShortBlock-Project-Download.zip -d project
 
       - name: Set up Java
         uses: actions/setup-java@v4
@@ -27,14 +29,22 @@ jobs:
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
 
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+
       - name: Build APK
         run: |
-          cd ShortBlock
+          cd project
+          if [ ! -f settings.gradle.kts ] && [ -f Settings.gradle.kts ]; then
+            mv Settings.gradle.kts settings.gradle.kts
+          fi
           gradle assembleDebug
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: ShortBlock-APK
-          path: ShortBlock/app/build/outputs/apk/debug/app-debug.apk
+          path: project/app/build/outputs/apk/debug/app-debug.apk
           
